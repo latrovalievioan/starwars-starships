@@ -12,7 +12,7 @@ export default class Starship {
       currentConsumable[1] === "months" ||
       currentConsumable[1] === "month"
     ) {
-      this._consumables = Number(currentConsumable[0]) * 12;
+      this._consumables = Number(currentConsumable[0]) * 30;
     } else if (
       currentConsumable[1] === "weeks" ||
       currentConsumable[1] === "week"

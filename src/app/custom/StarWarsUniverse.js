@@ -14,11 +14,17 @@ export default class StarWarsUniverse {
   async _createStarships() {
     const starshipsRaw = await fetch("https://swapi.dev/api/starships/");
     const starshipsBody = await starshipsRaw.json();
-    let resultsArr = [...starshipsBody.results];
+    let resultsArr = [];
     let currentNode = starshipsBody;
-    while (currentNode.next) {
-      currentNode = await (await fetch(currentNode.next)).json();
-      resultsArr = [...resultsArr, ...currentNode.results];
+    let counter = 0;
+    while (counter < starshipsBody.count) {
+      currentNode = await (
+        await fetch(`https://swapi.dev/api/starships/${counter}/`)
+      ).json();
+
+      if (!currentNode.detail) resultsArr.push(currentNode);
+
+      counter++;
     }
     const validated = this._validateData(resultsArr);
     this.starships = validated.map((ship) => {
@@ -31,30 +37,27 @@ export default class StarWarsUniverse {
       currentShip.parsePassengers();
       return currentShip;
     });
-    console.log(resultsArr);
-    console.log(this.starships);
     return this.starships;
+  }
+
+  _validateCheck([key, x]) {
+    const toCheck =
+      x && x !== "unknown" && x !== "undefined" && x !== "n/a" && x !== "0";
+    return toCheck;
   }
 
   _validateData(resultsArr) {
     const validated = resultsArr.filter((x) => {
-      return (
-        x.consumables !== "unknown" &&
-        x.consumables !== "undefined" &&
-        x.consumables &&
-        x.passengers !== "0" &&
-        x.passengers !== "n/a" &&
-        x.passengers !== "undefined" &&
-        x.passengers !== "unknown" &&
-        x.passengers
-      );
+      const values = [
+        ["cons", x.consumables],
+        ["vals", x.passengers],
+      ];
+      return values.every(this._validateCheck);
     });
-    console.log(validated, "validirani");
     return validated;
   }
 
   async init() {
-    //from task 3
     await this._getStarshipCount();
     await this._createStarships();
   }
@@ -68,6 +71,9 @@ export default class StarWarsUniverse {
         bestStarshipDays = bestShip.maxDaysInSpace;
       }
     });
+    const go6o = this.starships
+      .sort((a, b) => b.maxDaysInSpace - a.maxDaysInSpace)
+      .map((x) => ({ ...x, maxDaysInSpace: x.maxDaysInSpace }));
     return bestShip;
   }
 }
